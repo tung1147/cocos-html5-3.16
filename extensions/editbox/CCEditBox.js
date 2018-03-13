@@ -221,7 +221,7 @@ cc.EditBox = cc.Node.extend({
     _className: 'EditBox',
     _touchListener: null,
     _touchEnabled: true,
-
+    nextTabFocus: null,
     /**
      * constructor of cc.EditBox
      * @param {cc.Size} size
@@ -249,6 +249,30 @@ cc.EditBox = cc.Node.extend({
         cc.eventManager.addListener(this._touchListener, this);
 
         this.setInputFlag(this._editBoxInputFlag);
+        this.onUserKeyDownSelf = this.onUserKeyDown.bind(this);
+    },
+
+    editBoxEditingDidBegin: function ()
+    {
+        this._renderCmd._edTxt.addEventListener('keydown', this.onUserKeyDownSelf);
+    },
+    editBoxEditingDidEnd: function ()
+    {
+        this._renderCmd._edTxt.removeEventListener('keydown', this.onUserKeyDownSelf);//_edTxt
+    },
+
+    onUserKeyDown: function (evt)
+    {
+        evt = (evt) ? evt : ((event) ? event : null);
+        if (!evt)
+            return;
+        if (evt.keyCode === cc.KEY.tab)
+        {
+            if(this.nextTabFocus)
+                this.nextTabFocus._onTouchEnded();
+            if (evt.preventDefault)
+                evt.preventDefault();
+        }
     },
 
     setTouchEnabled: function (enable) {
@@ -875,6 +899,7 @@ cc.EditBox.create = function (size, normal9SpriteBg, press9SpriteBg, disabled9Sp
         var thisPointer = this;
         var tmpEdTxt = this._edTxt = document.createElement('input');
         tmpEdTxt.type = 'text';
+        tmpEdTxt.id = new Date().getTime();
         tmpEdTxt.style.fontFamily = this._edFontName;     
         tmpEdTxt.style.fontSize = this._edFontSize + 'px';
         tmpEdTxt.style.color = '#000000';
@@ -942,24 +967,32 @@ cc.EditBox.create = function (size, normal9SpriteBg, press9SpriteBg, disabled9Sp
                 thisPointer._onFocusOnMobile(editBox);
             }
 
+
             if (editBox._delegate && editBox._delegate.editBoxEditingDidBegin) {
                 editBox._delegate.editBoxEditingDidBegin(editBox);
             }
+            // editBox.editBoxEditingDidBegin();
+            setTimeout(function () {
+                thisPointer._edTxt.focusing = false;
+            }, 100);
         });
         tmpEdTxt.addEventListener('blur', function () {
             var editBox = thisPointer._editBox;
+            if(thisPointer._edTxt.focusing) return;
             editBox._text = this.value;
             thisPointer._updateDomTextCases();
 
             if (editBox._delegate && editBox._delegate.editBoxEditingDidEnd) {
                 editBox._delegate.editBoxEditingDidEnd(editBox);
             }
-
+            // editBox.editBoxEditingDidEnd();
             if (this.value === '') {
                 this.style.fontSize = editBox._placeholderFontSize + 'px';
                 this.style.color = cc.colorToHex(editBox._placeholderColor);
             }
             thisPointer._endEditing();
+            thisPointer._edTxt.focusing = false;
+
         });
         
         this._addDomToGameContainer();
@@ -1020,7 +1053,7 @@ cc.EditBox.create = function (size, normal9SpriteBg, press9SpriteBg, disabled9Sp
             if (editBox._delegate && editBox._delegate.editBoxEditingDidBegin) {
                 editBox._delegate.editBoxEditingDidBegin(editBox);
             }
-
+            editBox.editBoxEditingDidBegin();
         });
         tmpEdTxt.addEventListener('keypress', function (e) {
             var editBox = thisPointer._editBox;
@@ -1041,7 +1074,7 @@ cc.EditBox.create = function (size, normal9SpriteBg, press9SpriteBg, disabled9Sp
             if (editBox._delegate && editBox._delegate.editBoxEditingDidEnd) {
                 editBox._delegate.editBoxEditingDidEnd(editBox);
             }
-
+            editBox.editBoxEditingDidEnd();
             if (this.value === '') {
                 this.style.fontSize = editBox._placeholderFontSize + 'px';
                 this.style.color = cc.colorToHex(editBox._placeholderColor);
@@ -1175,6 +1208,7 @@ cc.EditBox.create = function (size, normal9SpriteBg, press9SpriteBg, disabled9Sp
         if (!this._editBox._alwaysOnTop) {
             if (this._edTxt.style.display === 'none') {
                 this._edTxt.style.display = '';
+                this._edTxt.focusing = true;
                 this._edTxt.focus();
             }
         }
