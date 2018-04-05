@@ -674,6 +674,7 @@ cc.Sprite = cc.Node.extend(/** @lends cc.Sprite# */{
      * @param {cc.SpriteFrame|String} newFrame
      */
     setSpriteFrame: function (newFrame) {
+        // console.log("newFrame", newFrame);
         var _t = this;
         if (typeof newFrame === 'string') {
             newFrame = cc.spriteFrameCache.getSpriteFrame(newFrame);

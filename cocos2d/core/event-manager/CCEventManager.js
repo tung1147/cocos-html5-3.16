@@ -614,7 +614,8 @@ cc.eventManager = /** @lends cc.eventManager# */{
         if (sceneGraphPriorityListeners && !shouldStopPropagation) {    // priority == 0, scene graph priority
             for (j = 0; j < sceneGraphPriorityListeners.length; j++) {
                 selListener = sceneGraphPriorityListeners[j];
-                if (selListener.isEnabled() && !selListener._isPaused() && selListener._isRegistered() && onEvent(selListener, eventOrArgs)) {
+                var setShouldStopPropagation = selListener.isEnabled() && !selListener._isPaused() && selListener._isRegistered() && onEvent(selListener, eventOrArgs);
+                if (setShouldStopPropagation) {
                     shouldStopPropagation = true;
                     break;
                 }
